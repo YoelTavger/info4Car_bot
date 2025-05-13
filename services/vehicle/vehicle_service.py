@@ -1,30 +1,73 @@
-from services.vehicle.data_provider import get_vehicle_data
-from services.vehicle.extended_data_provider import get_vehicle_extended_data
+from services.vehicle.search_manager import VehicleSearchManager
+from services.vehicle.enrichers.extended_info import ExtendedInfoEnricher
 
-def get_vehicle_complete(license_plate):
+class VehicleService:
     """
-    מחזיר מידע מאוחד מכל המאגרים על הרכב
-    
-    Args:
-        license_plate: מספר הרכב לחיפוש
-        
-    Returns:
-        רשימה עם מידע מלא מאוחד או None אם לא נמצא
+    שירות מאוחד לקבלת מידע מלא על רכב
     """
-    vehicle_data = get_vehicle_data(license_plate)
-    if not vehicle_data:
-        return None
+    
+    def __init__(self):
+        self.search_manager = VehicleSearchManager()
+        self.extended_info_enricher = ExtendedInfoEnricher()
+        # ניתן להוסיף עוד מעשירי נתונים לפי הצורך
+    
+    def get_vehicle_data(self, license_plate, strategy="parallel"):
+        """
+        מקבל מידע בסיסי על רכב
         
-    # ניסיון לקבל מידע נוסף מהמאגר השני
-    extended_data = get_vehicle_extended_data(license_plate)
+        Args:
+            license_plate: מספר הרכב
+            strategy: אסטרטגיית חיפוש
+            
+        Returns:
+            נתוני רכב או None אם לא נמצא
+        """
+        # חיפוש בסיסי
+        vehicle_data, source = self.search_manager.search_vehicle(license_plate, strategy)
+        return vehicle_data, source
     
-    # אם מצאנו מידע נוסף, נשלב אותו עם המידע הקיים
-    if extended_data:
-        # מעבר על כל שדה במידע הנוסף ושילובו בנתונים הקיימים
-        for key, value in extended_data.items():
-            # אם השדה לא קיים במידע הראשי או אם הוא ריק, נוסיף אותו
-            if key not in vehicle_data[0] or not vehicle_data[0][key]:
-                vehicle_data[0][key] = value
+    def get_vehicle_complete(self, license_plate, strategy="parallel"):
+        """
+        מקבל מידע מורחב על רכב
+        
+        Args:
+            license_plate: מספר הרכב
+            strategy: אסטרטגיית חיפוש
+            
+        Returns:
+            נתוני רכב מלאים או None אם לא נמצא
+        """
+        # חיפוש בסיסי
+        vehicle_data, source = self.search_manager.search_vehicle(license_plate, strategy)
+        
+        if not vehicle_data:
+            return None
+        
+        # העשרת נתונים
+        enriched_data = self.extended_info_enricher.enrich(vehicle_data, license_plate)
+        
+        return enriched_data
     
-    # print(f"מידע מאוחד: {vehicle_data}")
-    return vehicle_data
+    def get_vehicle_with_history(self, license_plate, callback=None):
+        """
+        מקבל מידע מלא כולל היסטוריה, עם אופציה לקולבק כשיש עדכון
+        
+        Args:
+            license_plate: מספר הרכב
+            callback: פונקציית קולבק לעדכון כשמגיע מידע נוסף
+            
+        Returns:
+            נתוני רכב בסיסיים מיידית
+        """
+        # חיפוש בסיסי והחזרה מיידית
+        vehicle_data, source = self.search_manager.search_vehicle(license_plate)
+        
+        if not vehicle_data:
+            return None
+        
+        # העשרת מידע בסיסי (מהיר)
+        vehicle_data = self.extended_info_enricher.enrich(vehicle_data, license_plate)
+        
+        # TODO: העשרת מידע נוספת בתהליך נפרד והפעלת קולבק
+        
+        return vehicle_data
