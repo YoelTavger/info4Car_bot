@@ -1,10 +1,11 @@
-import telebot
-import random
 from utils.stickers import LICENSE_PLATE_STICKERS
 from utils.helpers import send_loading_sticker, clean_plate_number
-from services.vehicle.vehicle_service import get_vehicle_complete
+from services.vehicle.vehicle_service import VehicleService
 from display.vehicle_info_formatter import format_vehicle_info
 from display.response_messages import get_no_vehicle_data_message
+
+# יצירת שירות רכב
+vehicle_service = VehicleService()
 
 def register_license_plate_handlers(bot):
     """
@@ -30,7 +31,7 @@ def register_license_plate_handlers(bot):
         loading_sticker = send_loading_sticker(bot, message.chat.id, LICENSE_PLATE_STICKERS)
         
         # קבלת מידע מורחב על הרכב
-        vehicle_data = get_vehicle_complete(plate_number)
+        vehicle_data = vehicle_service.get_vehicle_complete(plate_number)
         
         # טיפול בתוצאות ושליחת ההודעה המתאימה
         result_message = None

@@ -1,9 +1,12 @@
 import telebot
-from services.vehicle.vehicle_service import get_vehicle_complete
-from display.vehicle_info_formatter import format_vehicle_info
-from display.response_messages import get_plate_selected_message, get_no_vehicle_data_message
+from services.vehicle.vehicle_service import VehicleService
 from utils.stickers import LICENSE_PLATE_STICKERS
 from utils.helpers import send_loading_sticker
+from display.vehicle_info_formatter import format_vehicle_info
+from display.response_messages import get_plate_selected_message, get_no_vehicle_data_message
+
+# יצירת שירות רכב
+vehicle_service = VehicleService()
 
 def register_callback_handlers(bot):
     """
@@ -66,7 +69,7 @@ def handle_vehicle_info_direct(bot, chat_id, message_id, license_plate, loading_
         loading_sticker: הודעת הסטיקר לטעינה (למחיקה בסיום)
     """
     # קבלת מידע מורחב על הרכב מה-API
-    vehicle_data = get_vehicle_complete(license_plate)
+    vehicle_data = vehicle_service.get_vehicle_complete(license_plate)
     
     # הכנת התוכן לעדכון ההודעה
     if not vehicle_data:
