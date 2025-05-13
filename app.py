@@ -1,12 +1,10 @@
-import telebot
 import os
+import telebot
 import time
-from common import register_handlers
+from server import setup_webhook_server
 from config import API_TOKEN, IS_RENDER, WEBHOOK_URL, PORT
+from handlers.registry import register_all_handlers
 from keep_alive import setup_keep_alive
-from license_plate_numbers_handlers import register_license_plate_numbers
-from photo_handlers import register_photo
-
 
 def main():
     """
@@ -20,9 +18,7 @@ def main():
     bot = telebot.TeleBot(API_TOKEN)
 
     # רישום כל הטיפולים בפקודות
-    register_photo(bot)
-    register_license_plate_numbers(bot)
-    register_handlers(bot)
+    register_all_handlers(bot)
 
     # הפעלת הבוט
     try:
@@ -31,12 +27,11 @@ def main():
         if IS_RENDER:
             print(f"מפעיל במצב webhook עבור Render")
             
-            if not WEBHOOK_URL:
+            webhook_url = WEBHOOK_URL
+            if not webhook_url:
                 print("אזהרה: WEBHOOK_URL לא מוגדר. ייתכן שהבוט לא יעבוד כראוי.")
                 # השתמש בכתובת ברירת מחדל אם לא הוגדרה
                 webhook_url = f"https://{os.environ.get('RENDER_SERVICE_NAME')}.onrender.com/{API_TOKEN}"
-            else:
-                webhook_url = WEBHOOK_URL
                 
             # הפעלת מנגנון Keep-Alive עם כתובת ה-webhook
             # הוצא את חלק הנתיב מ-webhook_url כדי לקבל רק את כתובת הבסיס
@@ -50,25 +45,7 @@ def main():
             bot.set_webhook(url=webhook_url)
             
             # הפעלת שרת Flask לקבלת עדכונים
-            from flask import Flask, request
-            app = Flask(__name__)
-            
-            @app.route('/' + API_TOKEN, methods=['POST'])
-            def webhook():
-                try:
-                    update = telebot.types.Update.de_json(request.stream.read().decode('utf-8'))
-                    bot.process_new_updates([update])
-                    return ''
-                except Exception as e:
-                    print(f"שגיאה בטיפול בעדכון: {e}")
-                    return 'error'
-            
-            @app.route('/')
-            def index():
-                return "בוט אינפו-רכב פעיל!"
-            
-            # הפעלת שרת
-            app.run(host='0.0.0.0', port=PORT)
+            setup_webhook_server(bot, API_TOKEN, PORT)
         else:
             # הפעלה במצב polling (מקומי)
             print("מפעיל במצב polling")
