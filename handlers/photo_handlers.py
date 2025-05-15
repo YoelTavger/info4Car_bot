@@ -3,7 +3,7 @@ import telebot
 from utils.stickers import PHOTO_STICKERS, LICENSE_PLATE_STICKERS
 from utils.helpers import send_loading_sticker, clean_temp_files
 from services.ocr.ocr_service import OCRService
-from services.vehicle.vehicle_service import VehicleService
+from services.vehicle.vehicle_service import get_vehicle_complete
 from display.vehicle_info_formatter import format_vehicle_info
 from display.response_messages import (
     get_no_plate_detected_message,
@@ -14,7 +14,6 @@ from display.response_messages import (
 
 # יצירת שירות OCR
 ocr_service = OCRService()
-vehicle_service = VehicleService()
 
 def register_photo_handlers(bot):
     """

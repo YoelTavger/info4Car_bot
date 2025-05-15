@@ -3,15 +3,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# API Tokens
 API_TOKEN = os.getenv('API_TOKEN')
 
-# OCR Service
 PLATE_RECOGNIZER_TOKEN = os.environ.get('PLATE_RECOGNIZER_TOKEN')
 PLATE_RECOGNIZER_API_URL = os.environ.get('PLATE_RECOGNIZER_API_URL')
 REGIONS = ["il"]
 
-# Gov.il API
 GOVIL_API_URL = os.getenv("GOVIL_API_URL")
 
 # מאגרים ראשיים - רכבים שונים
@@ -26,8 +23,12 @@ RESOURCE_ID_PERSONAL_IMPORT = os.getenv("RESOURCE_ID_PERSONAL_IMPORT", "03adc637
 # מאגרי העשרת נתונים
 RESOURCE_ID_EXTENDED_INFO = os.getenv("RESOURCE_ID_EXTENDED_INFO", "0866573c-40cd-4ca8-91d2-9dd2d7a492e5")  # מידע נוסף
 RESOURCE_ID_VEHICLE_HISTORY = os.getenv("RESOURCE_ID_VEHICLE_HISTORY", "56063a99-8a3e-4ff4-912e-5966c0279bad")  # היסטוריה
+RESOURCE_ID_OWNERSHIP_HISTORY = os.getenv("RESOURCE_ID_VEHICLE_OWNERSHIP_HISTORY", "bb2355dc-9ec7-4f06-9c3f-3344672171da") # בעלויות
 RESOURCE_ID_DISABILITY_TAG = os.getenv("RESOURCE_ID_DISABILITY_TAG", "c8b9f9c8-4612-4068-934f-d4acd2e3c06e")  # תו נכה
 RESOURCE_ID_SAFETY_SYSTEMS = os.getenv("RESOURCE_ID_SAFETY_SYSTEMS", "83bfb278-7be1-4dab-ae2d-40125a923da1")  # מערכות בטיחות
+
+# מאגר WLTP לתוצרים ודגמים של כלי רכב
+RESOURCE_ID_WLTP_MODELS = os.getenv("RESOURCE_ID_WLTP_MODELS", "142afde2-6228-49f9-8a29-9b6c3a0cbe40")
 
 # הגדרות לסביבת Render
 IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true'
