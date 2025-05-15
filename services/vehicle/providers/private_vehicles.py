@@ -9,7 +9,8 @@ class PrivateVehiclesProvider(VehicleDataProvider):
         super().__init__(
             api_url=GOVIL_API_URL,
             resource_id=RESOURCE_ID_PRIVATE_VEHICLES,
-            name="מאגר רכב פרטי"
+            name="מאגר רכב פרטי",
+            id_field="mispar_rechev"
         )
     
     def get_vehicle_data(self, license_plate):
