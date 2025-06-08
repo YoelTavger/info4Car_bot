@@ -30,6 +30,9 @@ RESOURCE_ID_SAFETY_SYSTEMS = os.getenv("RESOURCE_ID_SAFETY_SYSTEMS", "83bfb278-7
 # מאגר WLTP לתוצרים ודגמים של כלי רכב
 RESOURCE_ID_WLTP_MODELS = os.getenv("RESOURCE_ID_WLTP_MODELS", "142afde2-6228-49f9-8a29-9b6c3a0cbe40")
 
+# מאגר תוצרים חדש
+RESOURCE_ID_MANUFACTURERS = os.getenv("RESOURCE_ID_MANUFACTURERS", "d00812f4-58c5-4ce8-b16c-ac13ae52f9d8")  # תוצרים
+
 # הגדרות לסביבת Render
 IS_RENDER = os.getenv('RENDER', 'false').lower() == 'true'
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
