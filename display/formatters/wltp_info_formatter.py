@@ -1,92 +1,100 @@
-def format_wltp_info(vehicle_info):
+from utils.markdown_utils import safe_markdown_escape
+
+def format_wltp_info(vehicle_info, show_all_fields=False):
     """
-    מעצב את כל המידע הזמין מ-WLTP על הרכב
+    מעצב את המידע הזמין מ-WLTP על הרכב (רק שדות שלא שולבו כבר)
     
     Args:
         vehicle_info: מילון עם נתוני הרכב
+        show_all_fields: האם להציג גם שדות ריקים
     
     Returns:
         טקסט מפורמט עם המידע מ-WLTP
     """
     info_text = ""
     
-    # בדיקה אם יש מידע WLTP
-    if not vehicle_info.get('wltp_info'):
+    # בדיקה אם יש מידע WLTP נפרד (שלא שולב כבר)
+    wltp = vehicle_info.get('wltp_info')
+    if not wltp and not show_all_fields:
         return info_text
         
-    wltp = vehicle_info['wltp_info']
-    info_text += "\n*נתוני WLTP - כל המידע הזמין:*\n"
+    info_text += "\nנתוני WLTP נוספים:\n"
     
-    # הדפסת כל השדות הזמינים
-    for key, value in wltp.items():
-        # דילוג על שדות מיוחדים
-        if key in ['_id', 'rank']:
-            continue
+    if not wltp:
+        if show_all_fields:
+            info_text += "אין מידע WLTP נוסף זמין\n"
+        return info_text
+    
+    # רשימת שדות עיקריים שכבר שולבו (לא להציג שוב)
+    integrated_fields = [
+        'mishkal_kolel', 'nefah_manoa', 'nefach_manoa', 'mispar_moshavim', 
+        'hanaa_nm', 'koah_sus', 'mispar_dlatot', 'gova'
+    ]
+    
+    # רשימת שדות חשובים להצגה תמיד
+    important_fields = [
+        ('kamut_CO2', 'פליטת CO₂'),
+        ('CO2_WLTP', 'פליטת CO2 בתקן WLTP'),
+        ('madad_yarok', 'מדד ירוק'),
+        ('kvutzat_zihum', 'קבוצת זיהום'),
+        ('nikud_betihut', 'ניקוד בטיחות'),
+        ('ramat_eivzur_betihuty', 'רמת אבזור בטיחות'),
+        ('delek_nm', 'סוג דלק'),
+        ('merkav', 'מרכב'),
+        ('ramat_gimur', 'רמת גימור')
+    ]
+    
+    # הצגת השדות החשובים
+    important_info_displayed = False
+    for field_key, field_name in important_fields:
+        value = wltp.get(field_key)
+        if value or show_all_fields:
+            display_value = value if value else 'לא ידוע'
             
-        # אם יש ערך
-        if value:
-            # נרמול הערך במקרה של אינדיקטורים
-            display_value = value
-            if key.endswith('_ind') and value == 1:
-                display_value = "✅"
-            elif key.endswith('_ind') and value == 0:
-                display_value = "❌"
+            # טיפול מיוחד בערכים
+            if field_key.endswith('_ind') and isinstance(display_value, (int, str)):
+                if str(display_value) == '1':
+                    display_value = "✅"
+                elif str(display_value) == '0':
+                    display_value = "❌"
+            
+            info_text += f"{field_name}: {display_value}\n"
+            important_info_displayed = True
+    
+    # אם תצוגה מפורטת, הצג את כל השדות הנוספים
+    if show_all_fields:
+        info_text += "\nנתוני WLTP מפורטים:\n"
+        
+        # הדפסת כל השדות הזמינים
+        for key, value in wltp.items():
+            # דילוג על שדות מיוחדים ושדות שכבר הוצגו
+            if (key in ['_id', 'rank', 'mispar_rechev'] or 
+                key in integrated_fields or 
+                key in [field[0] for field in important_fields]):
+                continue
                 
-            # מציאת התרגום לעברית אם קיים
-            hebrew_key = get_hebrew_field_name(key)
-            
-            # טיפול בתווים מיוחדים ב-Markdown
-            hebrew_key = escape_markdown(hebrew_key)
-            
-            if isinstance(display_value, str):
-                display_value = escape_markdown(display_value)
-            
-            info_text += f"*{hebrew_key}:* {display_value}\n"
+            # אם יש ערך
+            if value is not None and value != '':
+                # נרמול הערך במקרה של אינדיקטורים
+                display_value = value
+                if key.endswith('_ind') and isinstance(value, (int, str)):
+                    if str(value) == '1':
+                        display_value = "✅"
+                    elif str(value) == '0':
+                        display_value = "❌"
+                    
+                # מציאת התרגום לעברית אם קיים
+                hebrew_key = get_hebrew_field_name(key)
+                
+                info_text += f"{hebrew_key}: {display_value}\n"
     
     return info_text
 
 def escape_markdown(text):
     """
-    מחליף תווים מיוחדים ב-Markdown
-    
-    Args:
-        text: הטקסט לבריחה
-        
-    Returns:
-        טקסט עם תווים מוחלפים
+    פונקציה לתאימות לאחור - מפנה לפונקציה החדשה
     """
-    if not text:
-        return text
-        
-    # החלפת תווים מיוחדים
-    replacements = [
-        ('*', '\\*'),
-        ('_', '\\_'),
-        ('`', '\\`'),
-        ('[', '\\['),
-        (']', '\\]'),
-        ('(', '\\('),
-        (')', '\\)'),
-        ('~', '\\~'),
-        ('>', '\\>'),
-        ('#', '\\#'),
-        ('+', '\\+'),
-        ('-', '\\-'),
-        ('=', '\\='),
-        ('|', '\\|'),
-        ('{', '\\{'),
-        ('}', '\\}'),
-        ('.', '\\.'),
-        ('!', '\\!')
-    ]
-    
-    escaped_text = text
-    for old, new in replacements:
-        # החלף רק אם התו לא חלק מהתגים של HTML
-        if old not in ['<', '>']:
-            escaped_text = escaped_text.replace(old, new)
-    
-    return escaped_text
+    return safe_markdown_escape(text)
 
 def get_hebrew_field_name(field_name):
     """
@@ -116,7 +124,7 @@ def get_hebrew_field_name(field_name):
         "hanaa_cd": "קוד הנעה",
         "hanaa_nm": "סוג הנעה",
         "mazgan_ind": "מזגן",
-        "abs_ind": "בלם ABS",  # תו מיוחד
+        "abs_ind": "בלם ABS",
         "kariot_avir_source": "מקור כריות אוויר",
         "mispar_kariot_avir": "מספר כריות אוויר",
         "hege_koah_ind": "הגה כוח",
@@ -146,18 +154,18 @@ def get_hebrew_field_name(field_name):
         "kamut_NOX": "פליטת NOx",
         "kamut_PM10": "פליטת PM10",
         "kamut_HC": "פליטת פחמימנים",
-        "kamut_HC_NOX": "פליטת HC ו-NOx",  # שינוי + ל-ו
+        "kamut_HC_NOX": "פליטת HC ו-NOx",
         "kamut_CO": "פליטת CO",
         "madad_yarok": "מדד ירוק",
         "kvutzat_zihum": "קבוצת זיהום",
         "bakarat_stiya_menativ_ind": "בקרת סטייה מנתיב",
-        "bakarat_stiya_menativ_makor_hatkana": "מקור התקנה בקרת סטייה",  # הסרת המקף
+        "bakarat_stiya_menativ_makor_hatkana": "מקור התקנה בקרת סטייה",
         "nitur_merhak_milfanim_ind": "ניטור מרחק מלפנים",
-        "nitur_merhak_milfanim_makor_hatkana": "מקור התקנה ניטור מרחק",  # הסרת המקף
+        "nitur_merhak_milfanim_makor_hatkana": "מקור התקנה ניטור מרחק",
         "zihuy_beshetah_nistar_ind": "זיהוי בשטח נסתר",
         "bakarat_shyut_adaptivit_ind": "בקרת שיוט אדפטיבית",
         "zihuy_holchey_regel_ind": "זיהוי הולכי רגל",
-        "zihuy_holchey_regel_makor_hatkana": "מקור התקנה זיהוי הולכי רגל",  # הסרת המקף
+        "zihuy_holchey_regel_makor_hatkana": "מקור התקנה זיהוי הולכי רגל",
         "maarechet_ezer_labalam_ind": "מערכת עזר לבלם",
         "matzlemat_reverse_ind": "מצלמת רוורס",
         "hayshaney_lahatz_avir_batzmigim_ind": "חיישני לחץ אוויר בצמיגים",
@@ -168,13 +176,13 @@ def get_hebrew_field_name(field_name):
         "shlita_automatit_beorot_gvohim_ind": "שליטה אוטומטית באורות גבוהים",
         "zihuy_matzav_hitkarvut_mesukenet_ind": "זיהוי מצב התקרבות מסוכן",
         "zihuy_tamrurey_tnua_ind": "זיהוי תמרורי תנועה",
-        "zihuy_tamrurey_tnua_makor_hatkana": "מקור התקנה זיהוי תמרורי תנועה",  # הסרת המקף
-        "zihuy_rechev_do_galgali": "זיהוי רכב דו גלגלי",  # הסרת המקף
+        "zihuy_tamrurey_tnua_makor_hatkana": "מקור התקנה זיהוי תמרורי תנועה",
+        "zihuy_rechev_do_galgali": "זיהוי רכב דו גלגלי",
         "CO2_WLTP": "פליטת CO2 בתקן WLTP",
         "bakarat_stiya_activ_s": "בקרת סטייה אקטיבית",
         "blima_otomatit_nesia_leahor": "בלימה אוטומטית בנסיעה לאחור",
         "bakarat_mehirut_isa": "בקרת מהירות נסיעה",
-        "blimat_hirum_lifnei_holhei_regel_ofanaim": "בלימת חירום לפני הולכי רגל ואופניים",  # הסרת /
+        "blimat_hirum_lifnei_holhei_regel_ofanaim": "בלימת חירום לפני הולכי רגל ואופניים",
         "hitnagshut_cad_shetah_met": "התנגשות צד בשטח מת",
         "alco_lock": "נעילת התנעה תחת השפעת אלכוהול",
         "dg_metach_solela": "דרגת מתח סוללה",
